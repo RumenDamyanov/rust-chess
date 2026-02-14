@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/RumenDamyanov/rust-chess/actions/workflows/ci.yml/badge.svg)](https://github.com/RumenDamyanov/rust-chess/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/RumenDamyanov/rust-chess/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/RumenDamyanov/rust-chess/actions/workflows/github-code-scanning/codeql)
+[![Dependabot](https://github.com/RumenDamyanov/rust-chess/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/RumenDamyanov/rust-chess/actions/workflows/dependabot/dependabot-updates)
 [![codecov](https://codecov.io/gh/RumenDamyanov/rust-chess/graph/badge.svg)](https://codecov.io/gh/RumenDamyanov/rust-chess)
-[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025e8c?logo=dependabot)](https://github.com/RumenDamyanov/rust-chess/security/dependabot)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/RumenDamyanov/rust-chess/blob/master/LICENSE.md)
 
 > 📖 **Documentation**: [📚 Complete Wiki](https://github.com/RumenDamyanov/rust-chess/wiki) · [🚀 Quick Start](#quick-start) · [📋 API Reference](#api-endpoints) · [🏗️ Architecture](#architecture)
