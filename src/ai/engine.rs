@@ -7,7 +7,7 @@
 
 use std::time::{Duration, Instant};
 
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 
 use crate::engine::board::Position;
 use crate::engine::game::Game;
@@ -42,7 +42,7 @@ impl AiEngine for RandomAi {
         if moves.is_empty() {
             return Err(ChessError::GameOver("no legal moves".to_string()));
         }
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         Ok(*moves.choose(&mut rng).unwrap())
     }
 
