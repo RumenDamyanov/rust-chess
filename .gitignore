@@ -1,0 +1,26 @@
+# IDE
+.vscode/
+.cursor/
+.idea/
+.zed/
+
+# Internal AI docs
+.ai/
+wiki/
+
+# Rust / Cargo
+/target/
+Cargo.lock
+
+# Coverage
+/coverage/
+tarpaulin-report.html
+cobertura.xml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Added by cargo
+
+/target
