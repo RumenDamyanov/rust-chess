@@ -4,6 +4,8 @@
 [![CodeQL](https://github.com/RumenDamyanov/rust-chess/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/RumenDamyanov/rust-chess/actions/workflows/github-code-scanning/codeql)
 [![Dependabot](https://github.com/RumenDamyanov/rust-chess/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/RumenDamyanov/rust-chess/actions/workflows/dependabot/dependabot-updates)
 [![codecov](https://codecov.io/gh/RumenDamyanov/rust-chess/graph/badge.svg)](https://codecov.io/gh/RumenDamyanov/rust-chess)
+[![crates.io](https://img.shields.io/crates/v/rumenx-chess.svg)](https://crates.io/crates/rumenx-chess)
+[![docs.rs](https://docs.rs/rumenx-chess/badge.svg)](https://docs.rs/rumenx-chess)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/RumenDamyanov/rust-chess/blob/master/LICENSE.md)
 
 > 📖 **Documentation**: [📚 Complete Wiki](https://github.com/RumenDamyanov/rust-chess/wiki) · [🚀 Quick Start](#quick-start) · [📋 API Reference](#api-endpoints) · [🏗️ Architecture](#architecture)
@@ -99,7 +101,7 @@ curl http://localhost:8082/health
 ```json
 {
   "status": "ok",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "language": "rust",
   "engine": "rust-chess",
   "uptime": 5
@@ -130,6 +132,24 @@ curl -s "http://localhost:8082/api/games/$ID/analysis?depth=5" | jq '{eval: .eva
 
 # Export PGN
 curl -s "http://localhost:8082/api/games/$ID/pgn"
+```
+
+## Installation
+
+The crate is published on [crates.io](https://crates.io/crates/rumenx-chess) as `rumenx-chess`.
+
+```bash
+# Add as a dependency
+cargo add rumenx-chess
+
+# Or install the binary directly
+cargo install rumenx-chess
+```
+
+```toml
+# Cargo.toml
+[dependencies]
+rumenx-chess = "0.2"
 ```
 
 ## Configuration
@@ -320,6 +340,9 @@ src/
 | 5 | AI Engine (Minimax + Alpha-Beta) | ✅ Complete |
 | 6 | REST API (14 Endpoints) | ✅ Complete |
 | 7 | Docker, CI & Polish | ✅ Complete |
+| 8 | Enhanced AI (Iterative Deepening, TT, Quiescence) | ✅ Complete |
+| 9 | LLM Chat (Multi-Provider AI Coach) | ✅ Complete |
+| 10 | WebSocket Real-Time Events | ✅ Complete |
 
 ## License
 
