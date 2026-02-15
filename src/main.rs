@@ -1,6 +1,6 @@
-use rust_chess::api::router::create_router;
-use rust_chess::api::state::AppState;
-use rust_chess::config::AppConfig;
+use rumenx_chess::api::router::create_router;
+use rumenx_chess::api::state::AppState;
+use rumenx_chess::config::AppConfig;
 
 #[tokio::main]
 async fn main() {
@@ -19,7 +19,7 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "rust_chess=info,tower_http=info".into()),
+                .unwrap_or_else(|_| "rumenx_chess=info,tower_http=info".into()),
         )
         .init();
 

@@ -1,13 +1,19 @@
 [package]
-name = "rust-chess"
+name = "rumenx-chess"
 version = "0.1.0"
 edition = "2024"
 authors = ["Rumen Damyanov <contact@rumenx.com>"]
 description = "A high-performance chess engine and REST API server written in Rust"
 license = "MIT"
 repository = "https://github.com/RumenDamyanov/rust-chess"
+homepage = "https://github.com/RumenDamyanov/rust-chess"
+readme = "README.md"
 keywords = ["chess", "engine", "bitboard", "api", "axum"]
 categories = ["games", "web-programming::http-server"]
+
+[[bin]]
+name = "rust-chess"
+path = "src/main.rs"
 
 [dependencies]
 axum = { version = "0.8", features = ["ws"] }

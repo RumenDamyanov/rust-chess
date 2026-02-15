@@ -9,9 +9,9 @@ use futures_util::{SinkExt, StreamExt};
 use tokio::net::TcpListener;
 use tokio_tungstenite::tungstenite::Message;
 
-use rust_chess::api::router::create_router;
-use rust_chess::api::state::AppState;
-use rust_chess::config::AppConfig;
+use rumenx_chess::api::router::create_router;
+use rumenx_chess::api::state::AppState;
+use rumenx_chess::config::AppConfig;
 
 /// Helper: start the server on an OS-assigned port, return its base URL.
 async fn start_server() -> String {

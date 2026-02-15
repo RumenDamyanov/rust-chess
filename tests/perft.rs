@@ -6,8 +6,8 @@
 //!
 //! Reference: <https://www.chessprogramming.org/Perft_Results>
 
-use rust_chess::engine::board::Position;
-use rust_chess::engine::movegen::legal_moves;
+use rumenx_chess::engine::board::Position;
+use rumenx_chess::engine::movegen::legal_moves;
 
 /// Recursive perft: count leaf nodes at `depth`.
 fn perft(pos: &Position, depth: u32) -> u64 {

@@ -9,9 +9,9 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock* ./
 RUN mkdir src && \
     echo 'fn main() {}' > src/main.rs && \
-    echo 'pub mod engine; pub mod ai; pub mod api; pub mod config;' > src/lib.rs && \
-    mkdir -p src/engine src/ai src/api && \
-    touch src/engine/mod.rs src/ai/mod.rs src/api/mod.rs src/config.rs && \
+    echo 'pub mod engine; pub mod ai; pub mod api; pub mod config; pub mod chat; pub mod ws;' > src/lib.rs && \
+    mkdir -p src/engine src/ai src/api src/chat src/ws && \
+    touch src/engine/mod.rs src/ai/mod.rs src/api/mod.rs src/config.rs src/chat/mod.rs src/ws/mod.rs && \
     cargo build --release 2>/dev/null || true && \
     rm -rf src
 
