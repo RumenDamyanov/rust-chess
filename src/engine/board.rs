@@ -22,6 +22,13 @@ pub struct UndoInfo {
     pub zobrist_hash: u64,
 }
 
+/// State saved for null-move undo.
+#[derive(Clone, Debug)]
+pub struct NullMoveUndo {
+    pub en_passant: Option<Square>,
+    pub zobrist_hash: u64,
+}
+
 // ---------------------------------------------------------------------------
 // Position
 // ---------------------------------------------------------------------------
@@ -446,6 +453,39 @@ impl Position {
         if us == Color::Black {
             self.fullmove_number -= 1;
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // Null move (pass turn)
+    // -----------------------------------------------------------------------
+
+    /// Make a "null move": pass the turn without moving any piece.
+    /// Used in null-move pruning. Returns undo info.
+    pub fn make_null_move(&mut self) -> NullMoveUndo {
+        let zk = zobrist::keys();
+        let undo = NullMoveUndo {
+            en_passant: self.en_passant,
+            zobrist_hash: self.zobrist_hash,
+        };
+
+        // Clear en passant.
+        if let Some(ep) = self.en_passant {
+            self.zobrist_hash ^= zk.ep_key(ep.file());
+            self.en_passant = None;
+        }
+
+        // Switch side.
+        self.side_to_move = !self.side_to_move;
+        self.zobrist_hash ^= zk.side_to_move;
+
+        undo
+    }
+
+    /// Undo a null move.
+    pub fn undo_null_move(&mut self, undo: &NullMoveUndo) {
+        self.side_to_move = !self.side_to_move;
+        self.en_passant = undo.en_passant;
+        self.zobrist_hash = undo.zobrist_hash;
     }
 
     // -----------------------------------------------------------------------

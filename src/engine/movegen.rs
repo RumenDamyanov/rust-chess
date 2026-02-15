@@ -43,6 +43,27 @@ pub fn legal_moves_from(pos: &Position, from: Square) -> Vec<Move> {
         .collect()
 }
 
+/// Generate legal captures and queen promotions only (for quiescence search).
+pub fn legal_captures(pos: &Position) -> Vec<Move> {
+    let mut pseudo = Vec::with_capacity(64);
+    generate_pseudo_legal(pos, &mut pseudo);
+
+    let mut captures = Vec::with_capacity(pseudo.len());
+    for mv in pseudo {
+        // Only captures and queen promotions.
+        if !mv.flags.is_capture() && mv.promotion != Some(PieceType::Queen) {
+            continue;
+        }
+        let mut copy = pos.clone();
+        copy.make_move(mv);
+        let us = !copy.side_to_move;
+        if !copy.is_square_attacked(copy.king_sq(us), copy.side_to_move) {
+            captures.push(mv);
+        }
+    }
+    captures
+}
+
 // =========================================================================
 // Pseudo-legal generation (internal)
 // =========================================================================

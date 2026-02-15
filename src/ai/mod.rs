@@ -1,4 +1,6 @@
 pub mod engine;
 pub mod evaluation;
 
-pub use engine::{AiEngine, MinimaxAi, RandomAi, SearchStats, default_engine};
+pub use engine::{
+    AiEngine, MinimaxAi, RandomAi, SearchStats, TTEntry, TTFlag, TranspositionTable, default_engine,
+};
