@@ -321,10 +321,7 @@ impl LlmProvider for GeminiProvider {
         user_message: &'a str,
     ) -> Pin<Box<dyn Future<Output = Result<String, ChatError>> + Send + 'a>> {
         Box::pin(async move {
-            let url = format!(
-                "{}/{}:generateContent?key={}",
-                self.endpoint, self.model, self.api_key
-            );
+            let url = format!("{}/{}:generateContent", self.endpoint, self.model);
 
             let body = GeminiRequest {
                 system_instruction: GeminiSystemInstruction {
@@ -347,6 +344,7 @@ impl LlmProvider for GeminiProvider {
                 .client
                 .post(&url)
                 .header("Content-Type", "application/json")
+                .header("x-goog-api-key", &self.api_key)
                 .json(&body)
                 .send()
                 .await
