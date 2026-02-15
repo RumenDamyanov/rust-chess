@@ -344,7 +344,7 @@ impl LlmProvider for GeminiProvider {
                 .client
                 .post(&url)
                 .header("Content-Type", "application/json")
-                .header("Authorization", format!("Bearer {}", self.api_key))
+                .header("x-goog-api-key", &self.api_key)
                 .json(&body)
                 .send()
                 .await
