@@ -1,6 +1,6 @@
 [package]
 name = "rumenx-chess"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["Rumen Damyanov <contact@rumenx.com>"]
 description = "A high-performance chess engine and REST API server written in Rust"
