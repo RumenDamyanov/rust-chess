@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+#### Phase 9: LLM Chat
+- Multi-provider LLM abstraction with trait-based architecture (`LlmProvider`)
+- 5 provider implementations: OpenAI (gpt-4o-mini), Anthropic (claude-3-haiku), Gemini (gemini-1.5-flash), xAI (grok-1.5), DeepSeek (deepseek-chat)
+- OpenAI-compatible shared provider for OpenAI, xAI, and DeepSeek APIs
+- `POST /api/games/{id}/chat` — game-scoped chat with AI (context-aware)
+- `POST /api/games/{id}/react` — AI reaction to a chess move
+- `POST /api/chat` — general chess chat (no game context)
+- `GET /api/chat/status` — check LLM availability and configured provider
+- Conversation tracking per game with message history
+- Context-aware prompts: FEN position, move count, game phase, legal moves, check status
+- System prompt: friendly chess coach persona with chess terminology
+- Response cleaning: bracket artifact removal, prefix stripping, sentence-boundary truncation (280 char max)
+- Per-request provider/API key override support
+- Auto-detect provider from configured API keys (priority: OpenAI → Anthropic → Gemini → xAI → DeepSeek)
+- `LlmConfig` with environment variable configuration for all providers
+- Follow-up suggestion generation based on game phase
+- 46 new tests (306 total, all passing, zero warnings)
+
+#### Phase 8: Enhanced AI
+- Iterative deepening with time-limited search
+- Transposition table (1M entries, Zobrist-keyed, depth-preferred replacement)
+- Quiescence search with standing pat and delta pruning
+- Killer move heuristic (2 slots per ply)
+- History heuristic table with aging between iterations
+- Null move pruning (R=2, skipped in check/pawn-only endgames)
+- Late move reduction for quiet moves at depth ≥ 3
+- Enhanced move ordering: TT move → captures (MVV-LVA) → promotions → killers → history
+- `NullMoveUndo` and `make_null_move`/`undo_null_move` on Position
+- `legal_captures()` generator for quiescence search
+
 ## [0.1.0] - 2026-02-14
 
 ### Added

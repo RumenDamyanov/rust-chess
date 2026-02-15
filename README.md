@@ -134,9 +134,19 @@ Environment variables:
 | `HOST` | `0.0.0.0` | Bind address |
 | `CHESS_AI_TIMEOUT` | `5000` | AI move timeout in milliseconds |
 | `CHESS_AI_DEFAULT_DIFFICULTY` | `medium` | Default AI difficulty |
+| `CHESS_LLM_ENABLED` | `false` | Enable LLM chat features |
+| `CHESS_LLM_PROVIDER` | `openai` | Default LLM provider |
+| `OPENAI_API_KEY` | — | OpenAI API key |
+| `ANTHROPIC_API_KEY` | — | Anthropic API key |
+| `GEMINI_API_KEY` | — | Google Gemini API key |
+| `XAI_API_KEY` | — | xAI (Grok) API key |
+| `DEEPSEEK_API_KEY` | — | DeepSeek API key |
 
 ```bash
 PORT=9000 CHESS_AI_DEFAULT_DIFFICULTY=hard cargo run
+
+# Enable LLM chat with OpenAI
+CHESS_LLM_ENABLED=true OPENAI_API_KEY=sk-... cargo run
 ```
 
 ## API Endpoints
@@ -157,6 +167,10 @@ PORT=9000 CHESS_AI_DEFAULT_DIFFICULTY=hard cargo run
 | `POST` | `/api/games/{id}/fen` | Load position from FEN |
 | `GET` | `/api/games/{id}/pgn` | Export game as PGN (text/plain) |
 | `GET` | `/api/games/{id}/analysis` | Position analysis (eval, best move, depth) |
+| `POST` | `/api/games/{id}/chat` | Chat with AI about a game (LLM) |
+| `POST` | `/api/games/{id}/react` | AI reaction to a move (LLM) |
+| `POST` | `/api/chat` | General chess chat, no game context (LLM) |
+| `GET` | `/api/chat/status` | Check LLM chat availability |
 
 ### Error Response Format
 

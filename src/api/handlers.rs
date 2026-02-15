@@ -8,7 +8,7 @@ use axum::response::IntoResponse;
 use crate::ai::{AiEngine, MinimaxAi};
 use crate::engine::game::Game;
 use crate::engine::san::move_to_san;
-use crate::engine::types::{Difficulty, Move, Square};
+use crate::engine::types::{Color, Difficulty, Move, Square};
 
 use super::errors::ApiError;
 use super::models::*;
@@ -462,8 +462,176 @@ pub async fn analysis(
 }
 
 // =========================================================================
+// Chat with AI (game-scoped)
+// =========================================================================
+
+/// POST /api/games/{id}/chat
+pub async fn chat_with_ai(
+    State(state): State<SharedState>,
+    Path(id): Path<String>,
+    Json(input): Json<ChatRequest>,
+) -> Result<Json<ChatResponse>, ApiError> {
+    let chat_service = state
+        .chat
+        .as_ref()
+        .ok_or_else(|| ApiError::InvalidRequest("LLM chat is not enabled".into()))?;
+
+    // Fetch game to build move context.
+    let games = state.games.read().await;
+    let game = games
+        .get(&id)
+        .ok_or_else(|| ApiError::GameNotFound(id.clone()))?;
+
+    let move_data = build_move_context(game);
+    drop(games);
+
+    let chat_input = crate::chat::ChatInput {
+        game_id: id.clone(),
+        message: input.message,
+        move_data: Some(move_data),
+        provider: input.provider.clone(),
+        api_key: input.api_key.clone(),
+    };
+
+    let output = chat_service
+        .chat(chat_input)
+        .await
+        .map_err(|e| ApiError::InternalError(e.to_string()))?;
+
+    Ok(Json(ChatResponse {
+        response: output.message,
+        provider: output.personality,
+        game_context: output.game_context,
+        suggestions: output.suggestions,
+    }))
+}
+
+// =========================================================================
+// AI reaction to a move
+// =========================================================================
+
+/// POST /api/games/{id}/react
+pub async fn react_to_move(
+    State(state): State<SharedState>,
+    Path(id): Path<String>,
+    Json(input): Json<ReactionRequest>,
+) -> Result<Json<ReactionResponse>, ApiError> {
+    let chat_service = state
+        .chat
+        .as_ref()
+        .ok_or_else(|| ApiError::InvalidRequest("LLM chat is not enabled".into()))?;
+
+    let games = state.games.read().await;
+    let game = games
+        .get(&id)
+        .ok_or_else(|| ApiError::GameNotFound(id.clone()))?;
+
+    let move_data = build_move_context(game);
+    drop(games);
+
+    let output = chat_service
+        .react_to_move(
+            &id,
+            &input.chess_move,
+            &move_data,
+            input.provider.as_deref(),
+            input.api_key.as_deref(),
+        )
+        .await
+        .map_err(|e| ApiError::InternalError(e.to_string()))?;
+
+    Ok(Json(ReactionResponse {
+        reaction: output.message,
+        provider: output.personality,
+        game_context: output.game_context,
+    }))
+}
+
+// =========================================================================
+// General chess chat (no game context)
+// =========================================================================
+
+/// POST /api/chat
+pub async fn general_chat(
+    State(state): State<SharedState>,
+    Json(input): Json<ChatRequest>,
+) -> Result<Json<ChatResponse>, ApiError> {
+    let chat_service = state
+        .chat
+        .as_ref()
+        .ok_or_else(|| ApiError::InvalidRequest("LLM chat is not enabled".into()))?;
+
+    let output = chat_service
+        .general_chat(
+            &input.message,
+            input.provider.as_deref(),
+            input.api_key.as_deref(),
+        )
+        .await
+        .map_err(|e| ApiError::InternalError(e.to_string()))?;
+
+    Ok(Json(ChatResponse {
+        response: output.message,
+        provider: output.personality,
+        game_context: output.game_context,
+        suggestions: output.suggestions,
+    }))
+}
+
+// =========================================================================
+// Chat status
+// =========================================================================
+
+/// GET /api/chat/status
+pub async fn chat_status(
+    State(state): State<SharedState>,
+) -> Json<ChatStatusResponse> {
+    let (enabled, provider) = if let Some(ref chat) = state.chat {
+        (
+            chat.is_available(),
+            if chat.is_available() {
+                Some(state.config.llm.provider.clone())
+            } else {
+                None
+            },
+        )
+    } else {
+        (false, None)
+    };
+
+    Json(ChatStatusResponse { enabled, provider })
+}
+
+// =========================================================================
 // Helpers
 // =========================================================================
+
+/// Build MoveContext from a Game for chat context enrichment.
+fn build_move_context(game: &Game) -> crate::chat::MoveContext {
+    let status = game.status();
+    let legal = game.legal_moves();
+    let legal_strs: Vec<String> = legal.iter().map(|m| m.to_string()).collect();
+
+    let last_move_str = game
+        .move_history()
+        .last()
+        .map(|r| r.san.clone())
+        .unwrap_or_default();
+
+    crate::chat::MoveContext {
+        last_move: last_move_str,
+        move_count: game.move_history().len(),
+        current_player: match game.side_to_move() {
+            Color::White => "white".to_string(),
+            Color::Black => "black".to_string(),
+        },
+        game_status: status.as_str().to_string(),
+        position_fen: game.to_fen(),
+        legal_moves: legal_strs,
+        in_check: matches!(status, crate::engine::types::GameStatus::Check),
+        captured_piece: None,
+    }
+}
 
 /// Resolve a MoveRequest into an engine Move by matching against legal moves.
 fn resolve_move(game: &Game, input: &MoveRequest) -> Result<Move, ApiError> {
@@ -1126,5 +1294,167 @@ mod tests {
         assert!(json["evaluation"].is_number());
         assert!(json["depth"].is_number());
         assert!(json["nodesSearched"].is_number());
+    }
+
+    // --- Chat Status ---
+
+    #[tokio::test]
+    async fn chat_status_returns_disabled_by_default() {
+        let app = create_router(test_state());
+        let resp = app
+            .oneshot(
+                Request::get("/api/chat/status")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+        let json = body_json(resp).await;
+        assert_eq!(json["enabled"], false);
+        assert!(json["provider"].is_null());
+    }
+
+    #[tokio::test]
+    async fn chat_status_enabled_with_key() {
+        let mut config = AppConfig::default();
+        config.llm.enabled = true;
+        config.llm.openai.api_key = "sk-test".to_string();
+        let state = AppState::new(config);
+        let app = create_router(state);
+        let resp = app
+            .oneshot(
+                Request::get("/api/chat/status")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+        let json = body_json(resp).await;
+        assert_eq!(json["enabled"], true);
+        assert_eq!(json["provider"], "openai");
+    }
+
+    // --- Chat Endpoints (disabled) ---
+
+    #[tokio::test]
+    async fn chat_returns_error_when_disabled() {
+        let state = test_state();
+
+        // Create a game first.
+        let app = create_router(state.clone());
+        let resp = app
+            .oneshot(
+                Request::post("/api/games")
+                    .header("content-type", "application/json")
+                    .body(Body::from("{}"))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let id = body_json(resp).await["id"].as_str().unwrap().to_string();
+
+        // Try chat – should fail since LLM is disabled.
+        let app = create_router(state.clone());
+        let resp = app
+            .oneshot(
+                Request::post(format!("/api/games/{id}/chat"))
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"message":"hello"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+        let json = body_json(resp).await;
+        assert!(json["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("not enabled"));
+    }
+
+    #[tokio::test]
+    async fn react_returns_error_when_disabled() {
+        let state = test_state();
+
+        let app = create_router(state.clone());
+        let resp = app
+            .oneshot(
+                Request::post("/api/games")
+                    .header("content-type", "application/json")
+                    .body(Body::from("{}"))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let id = body_json(resp).await["id"].as_str().unwrap().to_string();
+
+        let app = create_router(state.clone());
+        let resp = app
+            .oneshot(
+                Request::post(format!("/api/games/{id}/react"))
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"move":"e2e4"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn general_chat_returns_error_when_disabled() {
+        let state = test_state();
+        let app = create_router(state);
+        let resp = app
+            .oneshot(
+                Request::post("/api/chat")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"message":"What is chess?"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn chat_game_not_found() {
+        // Enable LLM but with a dummy key (will fail at provider level, not game lookup).
+        let mut config = AppConfig::default();
+        config.llm.enabled = true;
+        config.llm.openai.api_key = "sk-test".to_string();
+        let state = AppState::new(config);
+        let app = create_router(state);
+        let resp = app
+            .oneshot(
+                Request::post("/api/games/nonexistent-id/chat")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"message":"hello"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn react_game_not_found() {
+        let mut config = AppConfig::default();
+        config.llm.enabled = true;
+        config.llm.openai.api_key = "sk-test".to_string();
+        let state = AppState::new(config);
+        let app = create_router(state);
+        let resp = app
+            .oneshot(
+                Request::post("/api/games/nonexistent-id/react")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"move":"e2e4"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
 }

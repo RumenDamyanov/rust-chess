@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use crate::engine::game::Game;
 use crate::engine::san::move_to_san;
@@ -57,6 +58,54 @@ pub struct LegalMovesQuery {
 #[serde(rename_all = "camelCase")]
 pub struct AnalysisQuery {
     pub difficulty: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Chat request / response models (API layer)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatRequest {
+    pub message: String,
+    pub provider: Option<String>,
+    pub api_key: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatResponse {
+    pub response: String,
+    pub provider: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub game_context: Option<HashMap<String, serde_json::Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suggestions: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReactionRequest {
+    #[serde(rename = "move")]
+    pub chess_move: String,
+    pub provider: Option<String>,
+    pub api_key: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReactionResponse {
+    pub reaction: String,
+    pub provider: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub game_context: Option<HashMap<String, serde_json::Value>>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatStatusResponse {
+    pub enabled: bool,
+    pub provider: Option<String>,
 }
 
 // ---------------------------------------------------------------------------

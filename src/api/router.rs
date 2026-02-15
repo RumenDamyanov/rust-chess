@@ -39,6 +39,11 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/games/{id}/fen", post(handlers::load_fen))
         .route("/api/games/{id}/pgn", get(handlers::export_pgn))
         .route("/api/games/{id}/analysis", get(handlers::analysis))
+        // Chat / LLM endpoints
+        .route("/api/games/{id}/chat", post(handlers::chat_with_ai))
+        .route("/api/games/{id}/react", post(handlers::react_to_move))
+        .route("/api/chat", post(handlers::general_chat))
+        .route("/api/chat/status", get(handlers::chat_status))
         // Middleware
         .layer(cors)
         .layer(TraceLayer::new_for_http())
