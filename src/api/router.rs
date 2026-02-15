@@ -5,6 +5,7 @@ use tower_http::trace::TraceLayer;
 
 use super::handlers;
 use super::state::SharedState;
+use crate::ws;
 
 /// Build the Axum router with all routes and middleware.
 pub fn create_router(state: SharedState) -> Router {
@@ -44,6 +45,8 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/games/{id}/react", post(handlers::react_to_move))
         .route("/api/chat", post(handlers::general_chat))
         .route("/api/chat/status", get(handlers::chat_status))
+        // WebSocket — real-time game events
+        .route("/ws/games/{id}", get(ws::ws_handler))
         // Middleware
         .layer(cors)
         .layer(TraceLayer::new_for_http())

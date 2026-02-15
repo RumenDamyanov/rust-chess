@@ -10,7 +10,8 @@ keywords = ["chess", "engine", "bitboard", "api", "axum"]
 categories = ["games", "web-programming::http-server"]
 
 [dependencies]
-axum = "0.8"
+axum = { version = "0.8", features = ["ws"] }
+futures = "0.3"
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -27,6 +28,8 @@ reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-feature
 tokio-test = "0.4"
 http-body-util = "0.1"
 tower = { version = "0.5", features = ["util"] }
+tokio-tungstenite = "0.28"
+futures-util = "0.3"
 
 [profile.release]
 lto = true

@@ -123,13 +123,14 @@ impl ChatService {
         let (mut conversation, _new) = self.ensure_conversation(&input.game_id).await;
 
         // Record user message.
-        let user_msg_id = self.add_message(
-            &input.game_id,
-            MessageType::User,
-            &input.message,
-            &input.move_data,
-        )
-        .await;
+        let user_msg_id = self
+            .add_message(
+                &input.game_id,
+                MessageType::User,
+                &input.message,
+                &input.move_data,
+            )
+            .await;
 
         // Reload after mutation.
         if let Some(c) = self.get_conversation(&input.game_id).await {
@@ -141,15 +142,17 @@ impl ChatService {
             Self::build_contextual_message(&input.message, &conversation, &input.move_data);
 
         // Resolve provider.
-        let provider = self.resolve_provider(input.provider.as_deref(), input.api_key.as_deref())?;
+        let provider =
+            self.resolve_provider(input.provider.as_deref(), input.api_key.as_deref())?;
 
         // Ask LLM.
         let raw_response = provider.ask(SYSTEM_PROMPT, &prompt).await?;
         let clean = Self::clean_response(&raw_response);
 
         // Record AI response.
-        let _ai_msg_id =
-            self.add_message(&input.game_id, MessageType::Ai, &clean, &None).await;
+        let _ai_msg_id = self
+            .add_message(&input.game_id, MessageType::Ai, &clean, &None)
+            .await;
 
         let suggestions = Self::generate_suggestions(&input.move_data);
 
@@ -258,14 +261,14 @@ impl ChatService {
             cfg.api_key = key.to_string();
 
             // Fill defaults if model/endpoint are empty.
-            if cfg.model.is_empty() || cfg.endpoint.is_empty() {
-                if let Some(default_cfg) = self.config.provider_config(name) {
-                    if cfg.model.is_empty() {
-                        cfg.model = default_cfg.model.clone();
-                    }
-                    if cfg.endpoint.is_empty() {
-                        cfg.endpoint = default_cfg.endpoint.clone();
-                    }
+            if (cfg.model.is_empty() || cfg.endpoint.is_empty())
+                && let Some(default_cfg) = self.config.provider_config(name)
+            {
+                if cfg.model.is_empty() {
+                    cfg.model = default_cfg.model.clone();
+                }
+                if cfg.endpoint.is_empty() {
+                    cfg.endpoint = default_cfg.endpoint.clone();
                 }
             }
 
@@ -312,7 +315,10 @@ impl ChatService {
     ) -> String {
         let now = Utc::now();
         let msg_id = format!(
-            "{}_{}_{}", msg_type.as_str(), game_id, now.timestamp_nanos_opt().unwrap_or(0)
+            "{}_{}_{}",
+            msg_type.as_str(),
+            game_id,
+            now.timestamp_nanos_opt().unwrap_or(0)
         );
 
         let game_state = move_data.as_ref().map(|md| {
@@ -321,10 +327,7 @@ impl ChatService {
                 "last_move".to_string(),
                 serde_json::Value::String(md.last_move.clone()),
             );
-            map.insert(
-                "move_count".to_string(),
-                serde_json::json!(md.move_count),
-            );
+            map.insert("move_count".to_string(), serde_json::json!(md.move_count));
             map.insert(
                 "current_player".to_string(),
                 serde_json::Value::String(md.current_player.clone()),
@@ -425,12 +428,11 @@ impl ChatService {
         let mut cleaned = raw.trim().to_string();
 
         // Remove bracketed context that might leak through.
-        if cleaned.starts_with('[') {
-            if let Some(idx) = cleaned.find(']') {
-                if idx < 50 {
-                    cleaned = cleaned[idx + 1..].trim().to_string();
-                }
-            }
+        if cleaned.starts_with('[')
+            && let Some(idx) = cleaned.find(']')
+            && idx < 50
+        {
+            cleaned = cleaned[idx + 1..].trim().to_string();
         }
 
         // Remove prefix artifacts.
@@ -487,10 +489,7 @@ impl ChatService {
         let md = move_data.as_ref()?;
 
         let mut ctx = HashMap::new();
-        ctx.insert(
-            "move_count".to_string(),
-            serde_json::json!(md.move_count),
-        );
+        ctx.insert("move_count".to_string(), serde_json::json!(md.move_count));
         ctx.insert(
             "current_player".to_string(),
             serde_json::Value::String(md.current_player.clone()),
@@ -520,10 +519,7 @@ impl ChatService {
                 serde_json::json!(md.legal_moves.len()),
             );
             let sample: Vec<_> = md.legal_moves.iter().take(5).cloned().collect();
-            ctx.insert(
-                "sample_legal_moves".to_string(),
-                serde_json::json!(sample),
-            );
+            ctx.insert("sample_legal_moves".to_string(), serde_json::json!(sample));
         }
         if md.in_check {
             ctx.insert("in_check".to_string(), serde_json::json!(true));
@@ -564,8 +560,10 @@ mod tests {
     use crate::config::LlmConfig;
 
     fn test_config() -> LlmConfig {
-        let mut cfg = LlmConfig::default();
-        cfg.enabled = true;
+        let mut cfg = LlmConfig {
+            enabled: true,
+            ..LlmConfig::default()
+        };
         cfg.openai.api_key = "sk-test".to_string();
         cfg
     }
@@ -588,8 +586,10 @@ mod tests {
 
     #[test]
     fn service_not_available_no_keys() {
-        let mut cfg = LlmConfig::default();
-        cfg.enabled = true;
+        let cfg = LlmConfig {
+            enabled: true,
+            ..LlmConfig::default()
+        };
         let svc = ChatService::new(cfg);
         assert!(!svc.is_available());
     }
@@ -716,8 +716,7 @@ mod tests {
             move_count: 10,
             current_player: "white".to_string(),
             game_status: "active".to_string(),
-            position_fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
-                .to_string(),
+            position_fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1".to_string(),
             last_move: "e2e4".to_string(),
             legal_moves: vec!["e7e5".to_string(), "d7d5".to_string()],
             in_check: false,
@@ -751,8 +750,7 @@ mod tests {
             last_move: "e2e4".to_string(),
             move_count: 1,
             current_player: "black".to_string(),
-            position_fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
-                .to_string(),
+            position_fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1".to_string(),
             ..Default::default()
         });
         let msg = ChatService::build_contextual_message("What's a good response?", &conv, &md);
@@ -784,8 +782,10 @@ mod tests {
 
     #[test]
     fn resolve_provider_returns_error_when_no_keys() {
-        let mut cfg = LlmConfig::default();
-        cfg.enabled = true;
+        let cfg = LlmConfig {
+            enabled: true,
+            ..LlmConfig::default()
+        };
         let svc = ChatService::new(cfg);
         let result = svc.resolve_provider(None, None);
         assert!(result.is_err());

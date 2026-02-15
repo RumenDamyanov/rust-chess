@@ -57,8 +57,7 @@ impl LlmConfig {
             provider,
             openai: ProviderConfig {
                 api_key: std::env::var("OPENAI_API_KEY").unwrap_or_default(),
-                model: std::env::var("OPENAI_MODEL")
-                    .unwrap_or_else(|_| "gpt-4o-mini".to_string()),
+                model: std::env::var("OPENAI_MODEL").unwrap_or_else(|_| "gpt-4o-mini".to_string()),
                 endpoint: std::env::var("OPENAI_ENDPOINT")
                     .unwrap_or_else(|_| "https://api.openai.com/v1/chat/completions".to_string()),
             },
@@ -73,15 +72,13 @@ impl LlmConfig {
                 api_key: std::env::var("GEMINI_API_KEY").unwrap_or_default(),
                 model: std::env::var("GEMINI_MODEL")
                     .unwrap_or_else(|_| "gemini-1.5-flash".to_string()),
-                endpoint: std::env::var("GEMINI_ENDPOINT")
-                    .unwrap_or_else(|_| {
-                        "https://generativelanguage.googleapis.com/v1beta/models".to_string()
-                    }),
+                endpoint: std::env::var("GEMINI_ENDPOINT").unwrap_or_else(|_| {
+                    "https://generativelanguage.googleapis.com/v1beta/models".to_string()
+                }),
             },
             xai: ProviderConfig {
                 api_key: std::env::var("XAI_API_KEY").unwrap_or_default(),
-                model: std::env::var("XAI_MODEL")
-                    .unwrap_or_else(|_| "grok-1.5".to_string()),
+                model: std::env::var("XAI_MODEL").unwrap_or_else(|_| "grok-1.5".to_string()),
                 endpoint: std::env::var("XAI_ENDPOINT")
                     .unwrap_or_else(|_| "https://api.x.ai/v1/chat/completions".to_string()),
             },
@@ -90,9 +87,7 @@ impl LlmConfig {
                 model: std::env::var("DEEPSEEK_MODEL")
                     .unwrap_or_else(|_| "deepseek-chat".to_string()),
                 endpoint: std::env::var("DEEPSEEK_ENDPOINT")
-                    .unwrap_or_else(|_| {
-                        "https://api.deepseek.com/v1/chat/completions".to_string()
-                    }),
+                    .unwrap_or_else(|_| "https://api.deepseek.com/v1/chat/completions".to_string()),
             },
         }
     }

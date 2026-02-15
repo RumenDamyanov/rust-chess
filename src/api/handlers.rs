@@ -152,10 +152,49 @@ pub async fn make_move(
         .get_mut(&id)
         .ok_or_else(|| ApiError::GameNotFound(id.clone()))?;
 
+    let player_before = color_name(game.side_to_move()).to_string();
     let mv = resolve_move(game, &input)?;
-    game.make_move(mv).map_err(ApiError::from)?;
+    let san = game.make_move(mv).map_err(ApiError::from)?;
 
-    Ok(Json(game_to_response(game)))
+    // Broadcast move event to WebSocket subscribers.
+    let status = game.status();
+    let check = matches!(status, crate::engine::types::GameStatus::Check);
+    let evt = crate::ws::WsEvent::move_made(
+        &id,
+        &san,
+        &mv.from.to_algebraic(),
+        &mv.to.to_algebraic(),
+        &player_before,
+        &game.to_fen(),
+        status.as_str(),
+        game.move_history().len(),
+        check,
+    );
+    let ws = state.ws.clone();
+    let gid = id.clone();
+
+    // Also check for game-over.
+    let game_over_evt = if status.is_game_over() {
+        Some(crate::ws::WsEvent::game_over(
+            &id,
+            status.as_str(),
+            &game.to_fen(),
+        ))
+    } else {
+        None
+    };
+
+    let response = game_to_response(game);
+    drop(games); // release write lock before async broadcast
+
+    tokio::spawn(async move {
+        ws.broadcast(&gid, evt).await;
+        if let Some(go) = game_over_evt {
+            ws.broadcast(&gid, go).await;
+        }
+    });
+
+    Ok(Json(response))
 }
 
 // =========================================================================
@@ -194,7 +233,27 @@ pub async fn undo_move(
 
     game.undo_move().map_err(ApiError::from)?;
 
-    Ok(Json(game_to_response(game)))
+    // Broadcast updated game state after undo.
+    let status = game.status();
+    let check = matches!(status, crate::engine::types::GameStatus::Check);
+    let player = color_name(game.side_to_move()).to_string();
+    let evt = crate::ws::WsEvent::game_state(
+        &id,
+        &game.to_fen(),
+        status.as_str(),
+        &player,
+        game.move_history().len(),
+        check,
+    );
+    let ws = state.ws.clone();
+    let gid = id.clone();
+
+    let response = game_to_response(game);
+    drop(games);
+
+    tokio::spawn(async move { ws.broadcast(&gid, evt).await });
+
+    Ok(Json(response))
 }
 
 // =========================================================================
@@ -224,6 +283,11 @@ pub async fn ai_move(
         (game.clone(), diff)
     };
 
+    // Broadcast "AI is thinking" event.
+    let diff_str = difficulty.to_string();
+    let thinking_evt = crate::ws::WsEvent::ai_thinking(&id, &diff_str);
+    state.ws.broadcast(&id, thinking_evt).await;
+
     // Run AI on a blocking thread to avoid starving the async runtime.
     let ai_result = tokio::task::spawn_blocking(move || {
         let engine = MinimaxAi::new();
@@ -246,12 +310,47 @@ pub async fn ai_move(
 
     let san = game.make_move(ai_mv).map_err(ApiError::from)?;
 
+    // Broadcast AI move complete event.
+    let status = game.status();
+    let check = matches!(status, crate::engine::types::GameStatus::Check);
+    let ai_complete_evt = crate::ws::WsEvent::ai_move_complete(
+        &id,
+        &san,
+        &ai_mv.from.to_algebraic(),
+        &ai_mv.to.to_algebraic(),
+        &game.to_fen(),
+        status.as_str(),
+        thinking_time,
+        game.move_history().len(),
+        check,
+    );
+    let game_over_evt = if status.is_game_over() {
+        Some(crate::ws::WsEvent::game_over(
+            &id,
+            status.as_str(),
+            &game.to_fen(),
+        ))
+    } else {
+        None
+    };
+
     let game_resp = game_to_response(game);
     let ai_last = LastMove {
         from: ai_mv.from.to_algebraic(),
         to: ai_mv.to.to_algebraic(),
         san,
     };
+
+    let ws = state.ws.clone();
+    let gid = id.clone();
+    drop(games);
+
+    tokio::spawn(async move {
+        ws.broadcast(&gid, ai_complete_evt).await;
+        if let Some(go) = game_over_evt {
+            ws.broadcast(&gid, go).await;
+        }
+    });
 
     Ok(Json(AiMoveResponse {
         ai_move: ai_last,
@@ -370,7 +469,27 @@ pub async fn load_fen(
 
     game.load_fen(&input.fen).map_err(ApiError::from)?;
 
-    Ok(Json(game_to_response(game)))
+    // Broadcast updated game state after FEN load.
+    let status = game.status();
+    let check = matches!(status, crate::engine::types::GameStatus::Check);
+    let player = color_name(game.side_to_move()).to_string();
+    let evt = crate::ws::WsEvent::game_state(
+        &id,
+        &game.to_fen(),
+        status.as_str(),
+        &player,
+        game.move_history().len(),
+        check,
+    );
+    let ws = state.ws.clone();
+    let gid = id.clone();
+
+    let response = game_to_response(game);
+    drop(games);
+
+    tokio::spawn(async move { ws.broadcast(&gid, evt).await });
+
+    Ok(Json(response))
 }
 
 // =========================================================================
@@ -583,9 +702,7 @@ pub async fn general_chat(
 // =========================================================================
 
 /// GET /api/chat/status
-pub async fn chat_status(
-    State(state): State<SharedState>,
-) -> Json<ChatStatusResponse> {
+pub async fn chat_status(State(state): State<SharedState>) -> Json<ChatStatusResponse> {
     let (enabled, provider) = if let Some(ref chat) = state.chat {
         (
             chat.is_available(),
@@ -1368,10 +1485,12 @@ mod tests {
             .unwrap();
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
         let json = body_json(resp).await;
-        assert!(json["error"]["message"]
-            .as_str()
-            .unwrap()
-            .contains("not enabled"));
+        assert!(
+            json["error"]["message"]
+                .as_str()
+                .unwrap()
+                .contains("not enabled")
+        );
     }
 
     #[tokio::test]

@@ -107,30 +107,31 @@ impl TranspositionTable {
     pub fn probe(&mut self, key: u64) -> Option<&TTEntry> {
         self.probes += 1;
         let idx = (key as usize) % self.size;
-        if let Some(entry) = &self.entries[idx] {
-            if entry.key == key {
-                self.hits += 1;
-                return Some(entry);
-            }
+        if let Some(entry) = &self.entries[idx]
+            && entry.key == key
+        {
+            self.hits += 1;
+            return Some(entry);
         }
         None
     }
 
     /// Store a result in the TT (depth-preferred replacement).
     #[inline]
-    pub fn store(&mut self, key: u64, depth: u32, score: i32, flag: TTFlag, best_move: Option<Move>) {
+    pub fn store(
+        &mut self,
+        key: u64,
+        depth: u32,
+        score: i32,
+        flag: TTFlag,
+        best_move: Option<Move>,
+    ) {
         let idx = (key as usize) % self.size;
         // Replace if: empty, collision from different position, or same position
         // with equal/greater depth.
         let should_replace = match &self.entries[idx] {
             None => true,
-            Some(existing) => {
-                if existing.key == key {
-                    depth >= existing.depth
-                } else {
-                    depth >= existing.depth
-                }
-            }
+            Some(existing) => depth >= existing.depth,
         };
         if should_replace {
             self.entries[idx] = Some(TTEntry {
@@ -254,10 +255,12 @@ fn move_order_score(
     ply: usize,
 ) -> i32 {
     // TT move gets highest priority.
-    if let Some(ttm) = tt_move {
-        if mv.from == ttm.from && mv.to == ttm.to && mv.promotion == ttm.promotion {
-            return 1_000_000;
-        }
+    if let Some(ttm) = tt_move
+        && mv.from == ttm.from
+        && mv.to == ttm.to
+        && mv.promotion == ttm.promotion
+    {
+        return 1_000_000;
     }
 
     let mut score = 0i32;
@@ -540,16 +543,14 @@ fn negamax(
 
     let mut best_score = -INF;
     let mut best_move = moves[0];
-    let mut moves_searched = 0u32;
     let original_alpha = alpha;
 
-    for mv in &moves {
+    for (moves_searched, mv) in moves.iter().enumerate() {
         let is_capture = mv.flags.is_capture();
         let is_promotion = mv.promotion.is_some();
-        let gives_check;
 
         let undo = pos.make_move(*mv);
-        gives_check = pos.is_in_check();
+        let gives_check = pos.is_in_check();
 
         let mut score;
 
@@ -577,7 +578,6 @@ fn negamax(
         }
 
         pos.undo_move(*mv, &undo);
-        moves_searched += 1;
 
         if ctx.aborted {
             return best_score.max(score);
@@ -1037,7 +1037,10 @@ mod tests {
         // Shallower entry should NOT replace.
         tt.store(42, 3, 50, TTFlag::UpperBound, None);
         let entry = tt.probe(42).unwrap();
-        assert_eq!(entry.score, 200, "shallower entry should not replace deeper");
+        assert_eq!(
+            entry.score, 200,
+            "shallower entry should not replace deeper"
+        );
     }
 
     #[test]
@@ -1047,7 +1050,10 @@ mod tests {
         let _ = tt.probe(42); // hit
         let _ = tt.probe(99); // miss
         let rate = tt.hit_rate();
-        assert!((rate - 50.0).abs() < 0.01, "expected 50% hit rate, got {rate}");
+        assert!(
+            (rate - 50.0).abs() < 0.01,
+            "expected 50% hit rate, got {rate}"
+        );
     }
 
     #[test]
@@ -1185,7 +1191,10 @@ mod tests {
         let (mv, stats) = ai.search(&mut pos, 20);
         assert!(mv.is_some(), "should find at least one move");
         assert!(stats.depth >= 1, "should complete at least depth 1");
-        assert!(stats.depth < 20, "should be time-limited, not reaching depth 20");
+        assert!(
+            stats.depth < 20,
+            "should be time-limited, not reaching depth 20"
+        );
     }
 
     #[test]
@@ -1205,7 +1214,10 @@ mod tests {
         // Both should return Qxf7.
         assert!(mv1.is_some());
         assert!(mv3.is_some());
-        assert!(stats3.nodes >= stats1.nodes, "deeper search explores more nodes");
+        assert!(
+            stats3.nodes >= stats1.nodes,
+            "deeper search explores more nodes"
+        );
     }
 
     // ===================================================================
@@ -1216,8 +1228,7 @@ mod tests {
     fn quiescence_avoids_horizon_effect() {
         // Position where a queen can capture a defended pawn on the next move.
         // Without quiescence, the engine at depth 1 might think it wins material.
-        let game =
-            Game::from_fen("4k3/8/8/3p4/2Q5/8/8/4K3 w - - 0 1").unwrap();
+        let game = Game::from_fen("4k3/8/8/3p4/2Q5/8/8/4K3 w - - 0 1").unwrap();
         let ai = MinimaxAi::new();
         let mut pos = game.position().clone();
         let (_mv, stats) = ai.search(&mut pos, 2);
@@ -1236,7 +1247,10 @@ mod tests {
         let (mv, stats) = ai.search(&mut pos, 3);
         // Should capture the rook.
         assert!(mv.is_some());
-        assert!(stats.score > 0, "winning material should yield positive score");
+        assert!(
+            stats.score > 0,
+            "winning material should yield positive score"
+        );
     }
 
     // ===================================================================
@@ -1263,7 +1277,8 @@ mod tests {
 
     #[test]
     fn has_non_pawn_material_detects_correctly() {
-        let pos_start = Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
+        let pos_start =
+            Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
         assert!(has_non_pawn_material(&pos_start));
 
         // Pawn-only endgame.
@@ -1277,8 +1292,8 @@ mod tests {
 
     #[test]
     fn tt_move_ordered_first() {
-        let pos = Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-            .unwrap();
+        let pos =
+            Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
         let mut moves = legal_moves(&pos);
         let killers = KillerTable::new();
         let history = HistoryTable::new();
@@ -1292,14 +1307,14 @@ mod tests {
 
     #[test]
     fn killer_moves_ordered_before_quiet() {
-        let pos = Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-            .unwrap();
+        let pos =
+            Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
         let mut moves = legal_moves(&pos);
         let mut killers = KillerTable::new();
         let history = HistoryTable::new();
 
         // Store a quiet move as killer.
-        let quiet_mv = moves.iter().find(|m| !m.flags.is_capture()).unwrap().clone();
+        let quiet_mv = *moves.iter().find(|m| !m.flags.is_capture()).unwrap();
         killers.store(0, quiet_mv);
 
         order_moves(&mut moves, &pos, None, &killers, &history, 0);

@@ -390,9 +390,7 @@ pub fn create_provider(
     config: &ProviderConfig,
 ) -> Result<Box<dyn LlmProvider>, ChatError> {
     match name {
-        "openai" | "xai" | "deepseek" => {
-            Ok(Box::new(OpenAiCompatible::new(name, config)?))
-        }
+        "openai" | "xai" | "deepseek" => Ok(Box::new(OpenAiCompatible::new(name, config)?)),
         "anthropic" => Ok(Box::new(AnthropicProvider::new(config)?)),
         "gemini" => Ok(Box::new(GeminiProvider::new(config)?)),
         other => Err(ChatError::UnsupportedProvider(other.to_string())),

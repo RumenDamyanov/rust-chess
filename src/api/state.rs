@@ -5,6 +5,7 @@ use tokio::sync::RwLock;
 use crate::chat::ChatService;
 use crate::config::AppConfig;
 use crate::engine::game::Game;
+use crate::ws::WsManager;
 
 /// Games stored by UUID.
 pub type GameStore = RwLock<HashMap<String, Game>>;
@@ -16,6 +17,8 @@ pub struct AppState {
     pub start_time: std::time::Instant,
     /// Chat service (None when LLM chat is disabled or no keys configured).
     pub chat: Option<Arc<ChatService>>,
+    /// WebSocket connection manager for real-time game events.
+    pub ws: Arc<WsManager>,
 }
 
 pub type SharedState = Arc<AppState>;
@@ -33,6 +36,7 @@ impl AppState {
             config,
             start_time: std::time::Instant::now(),
             chat,
+            ws: WsManager::new(),
         })
     }
 }

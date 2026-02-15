@@ -263,7 +263,7 @@ fn piece_type_name(pt: PieceType) -> &'static str {
     }
 }
 
-fn color_name(c: Color) -> &'static str {
+pub(crate) fn color_name(c: Color) -> &'static str {
     match c {
         Color::White => "white",
         Color::Black => "black",

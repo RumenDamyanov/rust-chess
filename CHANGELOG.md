@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Phase 10: WebSocket Real-Time Events
+- WebSocket connection manager (`WsManager`) with per-game client tracking and broadcast
+- `GET /ws/games/{id}` — WebSocket upgrade endpoint for real-time game event streaming
+- Typed message system with 8 server→client event types:
+  - `subscribed` — sent on connect with full game state snapshot
+  - `move_made` — broadcast after any player move with SAN, from/to, player, FEN
+  - `ai_thinking` — broadcast when AI computation starts (includes difficulty)
+  - `ai_move_complete` — broadcast when AI finishes with move details and thinking time
+  - `game_state` — broadcast after undo/FEN load with updated position
+  - `game_over` — broadcast on checkmate, stalemate, or draw
+  - `error` — sent for invalid game connections
+  - `pong` — response to client ping commands
+- Client→server command protocol: `subscribe`, `unsubscribe`, `ping`
+- Automatic stale client cleanup when send fails
+- REST handler integration: all mutation endpoints (`make_move`, `undo_move`, `ai_move`, `load_fen`) broadcast events to WebSocket subscribers
+- Non-blocking broadcast via `tokio::spawn` — broadcasts don't delay REST responses
+- Multi-client support: multiple WS clients per game, game-isolated broadcasts
+- 35 new tests (341 total: 312 unit + 17 perft + 12 WS integration, zero warnings)
+
 #### Phase 9: LLM Chat
 - Multi-provider LLM abstraction with trait-based architecture (`LlmProvider`)
 - 5 provider implementations: OpenAI (gpt-4o-mini), Anthropic (claude-3-haiku), Gemini (gemini-1.5-flash), xAI (grok-1.5), DeepSeek (deepseek-chat)

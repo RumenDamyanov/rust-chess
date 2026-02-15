@@ -52,9 +52,17 @@ Part of the **chess platform family** alongside [go-chess](https://github.com/Ru
 - **CORS Support**: Pre-configured for cross-origin requests (any origin/method/header)
 - **Structured Logging**: `tracing`-based request/response logging with configurable levels
 
+### � WebSocket Real-Time Events
+
+- **Live Game Streaming**: `GET /ws/games/{id}` — connect to receive real-time game events
+- **8 Event Types**: `subscribed`, `move_made`, `ai_thinking`, `ai_move_complete`, `game_state`, `game_over`, `error`, `pong`
+- **Client Commands**: `subscribe`, `unsubscribe`, `ping` — JSON command protocol
+- **Multi-Client Support**: Multiple WebSocket clients per game with isolated broadcasts
+- **Automatic Cleanup**: Stale connections detected and removed on failed sends
+
 ### 🛠️ Technical Excellence
 
-- **236 Tests**: 219 unit tests + 17 perft integration tests, ~89% code coverage
+- **341 Tests**: 312 unit tests + 17 perft integration + 12 WebSocket integration, ~89% code coverage
 - **Zero Warnings**: Clean `cargo clippy -D warnings` and `cargo fmt --check`
 - **CI/CD Pipeline**: GitHub Actions with fmt → clippy → test → perft → coverage → audit → Docker
 - **2.93 MB Docker Image**: `scratch`-based with built-in `--health-check` flag (no curl needed)
@@ -171,6 +179,38 @@ CHESS_LLM_ENABLED=true OPENAI_API_KEY=sk-... cargo run
 | `POST` | `/api/games/{id}/react` | AI reaction to a move (LLM) |
 | `POST` | `/api/chat` | General chess chat, no game context (LLM) |
 | `GET` | `/api/chat/status` | Check LLM chat availability |
+| `GET` | `/ws/games/{id}` | WebSocket — real-time game events |
+
+### WebSocket Usage
+
+Connect to `ws://localhost:8082/ws/games/{id}` to receive real-time events for a game. On connect, the server sends a `subscribed` event with the current game state.
+
+**Server → Client events:**
+
+```jsonc
+// Sent on connect
+{"type":"subscribed","gameId":"...","fen":"...","status":"active","currentPlayer":"white","moveCount":0,"check":false}
+
+// After a player move
+{"type":"move_made","gameId":"...","san":"e4","from":"e2","to":"e4","player":"white","fen":"...","status":"active","moveCount":1,"check":false}
+
+// When AI starts thinking
+{"type":"ai_thinking","gameId":"...","difficulty":"medium"}
+
+// When AI finishes
+{"type":"ai_move_complete","gameId":"...","san":"e5","from":"e7","to":"e5","fen":"...","status":"active","thinkingTimeMs":42,"moveCount":2,"check":false}
+
+// On checkmate/stalemate/draw
+{"type":"game_over","gameId":"...","result":"checkmate","fen":"..."}
+```
+
+**Client → Server commands:**
+
+```jsonc
+{"type":"ping"}                         // Server replies with {"type":"pong","timestamp":...}
+{"type":"subscribe","game_id":"..."}    // Re-subscribe / get current state
+{"type":"unsubscribe","game_id":"..."}  // Unsubscribe from a game
+```
 
 ### Error Response Format
 
