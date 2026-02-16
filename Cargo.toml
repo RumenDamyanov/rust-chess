@@ -28,7 +28,7 @@ uuid = { version = "1", features = ["v4"] }
 rand = "0.10"
 thiserror = "2"
 chrono = { version = "0.4", features = ["serde"] }
-reqwest = { version = "0.13", features = ["json", "rustls-tls"], default-features = false }
+reqwest = { version = "0.13", features = ["json"] }
 
 [dev-dependencies]
 tokio-test = "0.4"
