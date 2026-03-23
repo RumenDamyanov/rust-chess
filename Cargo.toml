@@ -34,7 +34,7 @@ reqwest = { version = "0.13", features = ["json"] }
 tokio-test = "0.4"
 http-body-util = "0.1"
 tower = { version = "0.5", features = ["util"] }
-tokio-tungstenite = "0.28"
+tokio-tungstenite = "0.29"
 futures-util = "0.3"
 
 [profile.release]
