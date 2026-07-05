@@ -1,3 +1,4 @@
+use std::cmp::Reverse;
 use std::time::Instant;
 
 use axum::Json;
@@ -85,7 +86,7 @@ pub async fn list_games(
     let total = filtered.len();
 
     // Sort by created_at descending for consistent ordering.
-    filtered.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    filtered.sort_by_key(|b| Reverse(b.created_at));
 
     let page: Vec<GameResponse> = filtered
         .into_iter()
