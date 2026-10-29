@@ -10,7 +10,6 @@ wiki/
 
 # Rust / Cargo
 /target/
-Cargo.lock
 
 # Coverage
 /coverage/

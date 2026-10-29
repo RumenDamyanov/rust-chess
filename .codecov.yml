@@ -1,0 +1,17 @@
+coverage:
+  status:
+    project:
+      default:
+        # Compare against the base commit. A 0.01% move is rounding, not a
+        # coverage regression. A larger drop still fails the check.
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 80%
+        threshold: 1%
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false

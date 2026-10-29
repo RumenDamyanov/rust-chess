@@ -41,7 +41,10 @@ We provide security updates for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+| 0.2.x   | :white_check_mark: |
+| 0.1.x   | :x:                |
+
+0.2.1 refreshes the HTTP client lockfile. `reqwest` 0.13.5 pulls patched `h2`, `quinn-proto`, `rustls`, `rustls-webpki`, `webpki-root-certs`, and `aws-lc-sys`. Run `cargo audit` before publishing.
 
 ## Security Best Practices
 

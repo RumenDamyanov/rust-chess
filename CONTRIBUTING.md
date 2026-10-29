@@ -19,7 +19,7 @@ This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participatin
 ## Getting Started
 
 1. **Fork the repository** and clone it locally
-2. **Install Rust**: [rustup.rs](https://rustup.rs/) (stable, 1.82+)
+2. **Install Rust**: [rustup.rs](https://rustup.rs/) (stable, 1.85+)
 3. **Create a feature branch**: `git checkout -b feature/your-feature-name`
 4. **Make your changes** following our coding standards
 5. **Test your changes**: `cargo test`

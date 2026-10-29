@@ -74,7 +74,7 @@ Part of the **chess platform family** alongside [go-chess](https://github.com/Ru
 
 ### Prerequisites
 
-- [Rust](https://rustup.rs/) 1.82+ (stable, edition 2024)
+- [Rust](https://rustup.rs/) 1.85+ (stable, edition 2024)
 
 ### Build & Run
 
@@ -101,7 +101,7 @@ curl http://localhost:8082/health
 ```json
 {
   "status": "ok",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "language": "rust",
   "engine": "rust-chess",
   "uptime": 5
