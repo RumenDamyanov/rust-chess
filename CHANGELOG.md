@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default chat models are now OpenAI `gpt-5.4-mini`, Anthropic `claude-sonnet-5`, Google `gemini-3.8-flash`, and xAI `grok-4.6`. DeepSeek stays on `deepseek-chat`. Older ids still work when set with `OPENAI_MODEL`, `ANTHROPIC_MODEL`, `GEMINI_MODEL`, or `XAI_MODEL`.
 - Document Rust 1.85+ as the minimum for edition 2024. The Docker builder is `rust:1.99-alpine`.
 - Publish the same project files as the other game crates (`include` in `Cargo.toml`).
+- Allow Codecov project and patch coverage to move by 1% so a rounding difference does not fail the check.
 
 ## [0.2.0] - 2026-02-15
 
