@@ -57,28 +57,28 @@ impl LlmConfig {
             provider,
             openai: ProviderConfig {
                 api_key: std::env::var("OPENAI_API_KEY").unwrap_or_default(),
-                model: std::env::var("OPENAI_MODEL").unwrap_or_else(|_| "gpt-4o-mini".to_string()),
+                model: std::env::var("OPENAI_MODEL").unwrap_or_else(|_| "gpt-5.4-mini".to_string()),
                 endpoint: std::env::var("OPENAI_ENDPOINT")
                     .unwrap_or_else(|_| "https://api.openai.com/v1/chat/completions".to_string()),
             },
             anthropic: ProviderConfig {
                 api_key: std::env::var("ANTHROPIC_API_KEY").unwrap_or_default(),
                 model: std::env::var("ANTHROPIC_MODEL")
-                    .unwrap_or_else(|_| "claude-3-haiku-20240307".to_string()),
+                    .unwrap_or_else(|_| "claude-sonnet-5".to_string()),
                 endpoint: std::env::var("ANTHROPIC_ENDPOINT")
                     .unwrap_or_else(|_| "https://api.anthropic.com/v1/messages".to_string()),
             },
             gemini: ProviderConfig {
                 api_key: std::env::var("GEMINI_API_KEY").unwrap_or_default(),
                 model: std::env::var("GEMINI_MODEL")
-                    .unwrap_or_else(|_| "gemini-1.5-flash".to_string()),
+                    .unwrap_or_else(|_| "gemini-3.8-flash".to_string()),
                 endpoint: std::env::var("GEMINI_ENDPOINT").unwrap_or_else(|_| {
                     "https://generativelanguage.googleapis.com/v1beta/models".to_string()
                 }),
             },
             xai: ProviderConfig {
                 api_key: std::env::var("XAI_API_KEY").unwrap_or_default(),
-                model: std::env::var("XAI_MODEL").unwrap_or_else(|_| "grok-1.5".to_string()),
+                model: std::env::var("XAI_MODEL").unwrap_or_else(|_| "grok-4.6".to_string()),
                 endpoint: std::env::var("XAI_ENDPOINT")
                     .unwrap_or_else(|_| "https://api.x.ai/v1/chat/completions".to_string()),
             },
@@ -132,22 +132,22 @@ impl Default for LlmConfig {
             provider: "openai".to_string(),
             openai: ProviderConfig {
                 api_key: String::new(),
-                model: "gpt-4o-mini".to_string(),
+                model: "gpt-5.4-mini".to_string(),
                 endpoint: "https://api.openai.com/v1/chat/completions".to_string(),
             },
             anthropic: ProviderConfig {
                 api_key: String::new(),
-                model: "claude-3-haiku-20240307".to_string(),
+                model: "claude-sonnet-5".to_string(),
                 endpoint: "https://api.anthropic.com/v1/messages".to_string(),
             },
             gemini: ProviderConfig {
                 api_key: String::new(),
-                model: "gemini-1.5-flash".to_string(),
+                model: "gemini-3.8-flash".to_string(),
                 endpoint: "https://generativelanguage.googleapis.com/v1beta/models".to_string(),
             },
             xai: ProviderConfig {
                 api_key: String::new(),
-                model: "grok-1.5".to_string(),
+                model: "grok-4.6".to_string(),
                 endpoint: "https://api.x.ai/v1/chat/completions".to_string(),
             },
             deepseek: ProviderConfig {
@@ -224,10 +224,10 @@ mod tests {
         assert!(!llm.enabled);
         assert_eq!(llm.provider, "openai");
         assert!(llm.openai.api_key.is_empty());
-        assert_eq!(llm.openai.model, "gpt-4o-mini");
-        assert_eq!(llm.anthropic.model, "claude-3-haiku-20240307");
-        assert_eq!(llm.gemini.model, "gemini-1.5-flash");
-        assert_eq!(llm.xai.model, "grok-1.5");
+        assert_eq!(llm.openai.model, "gpt-5.4-mini");
+        assert_eq!(llm.anthropic.model, "claude-sonnet-5");
+        assert_eq!(llm.gemini.model, "gemini-3.8-flash");
+        assert_eq!(llm.xai.model, "grok-4.6");
         assert_eq!(llm.deepseek.model, "deepseek-chat");
     }
 

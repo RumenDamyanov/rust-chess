@@ -1,7 +1,8 @@
 [package]
 name = "rumenx-chess"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
+rust-version = "1.85"
 authors = ["Rumen Damyanov <contact@rumenx.com>"]
 description = "A high-performance chess engine and REST API server written in Rust"
 license = "MIT"
@@ -10,6 +11,20 @@ homepage = "https://github.com/RumenDamyanov/rust-chess"
 readme = "README.md"
 keywords = ["chess", "engine", "bitboard", "api", "axum"]
 categories = ["games", "web-programming::http-server"]
+include = [
+    "src/**/*",
+    "Cargo.toml",
+    "Cargo.lock",
+    "LICENSE.md",
+    "README.md",
+    "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "FUNDING.md",
+    "Makefile",
+    "Dockerfile",
+]
 
 [[bin]]
 name = "rust-chess"
@@ -18,7 +33,7 @@ path = "src/main.rs"
 [dependencies]
 axum = { version = "0.8", features = ["ws"] }
 futures = "0.3"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.54.1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tower-http = { version = "0.7", features = ["cors", "trace"] }
@@ -28,7 +43,7 @@ uuid = { version = "1", features = ["v4"] }
 rand = "0.10"
 thiserror = "2"
 chrono = { version = "0.4", features = ["serde"] }
-reqwest = { version = "0.13", features = ["json"] }
+reqwest = { version = "0.13.5", features = ["json"] }
 
 [dev-dependencies]
 tokio-test = "0.4"

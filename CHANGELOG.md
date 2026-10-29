@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-29
+
+### Security
+
+- Track `Cargo.lock` and require `reqwest` 0.13.5 and `tokio` 1.54.1. The locked tree uses patched `h2` 0.4.20, `quinn-proto` 0.11.19, `rustls` 0.23.46, `rustls-webpki` 0.103.16, `webpki-root-certs` 1.0.11, and `aws-lc-sys` 0.47.0. `cargo audit` reports no vulnerabilities.
+- Replace the yanked `chacha20` 0.10.0 build.
+
+### Changed
+
+- Default chat models are now OpenAI `gpt-5.4-mini`, Anthropic `claude-sonnet-5`, Google `gemini-3.8-flash`, and xAI `grok-4.6`. DeepSeek stays on `deepseek-chat`. Older ids still work when set with `OPENAI_MODEL`, `ANTHROPIC_MODEL`, `GEMINI_MODEL`, or `XAI_MODEL`.
+- Document Rust 1.85+ as the minimum for edition 2024. The Docker builder is `rust:1.99-alpine`.
+- Publish the same project files as the other game crates (`include` in `Cargo.toml`).
+
 ## [0.2.0] - 2026-02-15
 
 ### Added
@@ -114,5 +127,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Zero compiler warnings (`cargo clippy -D warnings`)
 - Consistent code formatting (`cargo fmt --check`)
 
+[0.2.1]: https://github.com/RumenDamyanov/rust-chess/releases/tag/v0.2.1
 [0.2.0]: https://github.com/RumenDamyanov/rust-chess/releases/tag/v0.2.0
 [0.1.0]: https://github.com/RumenDamyanov/rust-chess/releases/tag/v0.1.0
