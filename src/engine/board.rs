@@ -279,11 +279,7 @@ impl Position {
 
         // Bishop / Queen (diagonals).
         let bishop_queen = self.bb(by, PieceType::Bishop) | self.bb(by, PieceType::Queen);
-        if (t.bishop_attacks(sq, occ) & bishop_queen).is_not_empty() {
-            return true;
-        }
-
-        false
+        (t.bishop_attacks(sq, occ) & bishop_queen).is_not_empty()
     }
 
     /// Is the side-to-move's king currently in check?
