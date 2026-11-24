@@ -312,14 +312,14 @@ impl Game {
         let pos = &self.position;
 
         // Any pawns, rooks, or queens → sufficient.
-        for color_idx in 0..2 {
-            if pos.pieces[color_idx][PieceType::Pawn.index()].is_not_empty() {
+        for pieces in &pos.pieces {
+            if pieces[PieceType::Pawn.index()].is_not_empty() {
                 return false;
             }
-            if pos.pieces[color_idx][PieceType::Rook.index()].is_not_empty() {
+            if pieces[PieceType::Rook.index()].is_not_empty() {
                 return false;
             }
-            if pos.pieces[color_idx][PieceType::Queen.index()].is_not_empty() {
+            if pieces[PieceType::Queen.index()].is_not_empty() {
                 return false;
             }
         }
